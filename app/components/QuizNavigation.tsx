@@ -5,19 +5,23 @@ interface QuizNavigationProps {
   total: number;
   onPrev: () => void;
   onNext: () => void;
+  answeredCount: number;
 }
 
 export function QuizNavigation({
   current,
   total,
   onPrev,
-  onNext
+  onNext,
+  answeredCount
 }: QuizNavigationProps) {
+  const pendingCount = total - answeredCount;
+
   return (
     <div className="flex items-center justify-between w-full mb-1">
-      {/* Left: Current question info */}
+      {/* Left: Pending questions info */}
       <div className="text-sm font-semibold text-text-low">
-        Question <span className="text-text-high">{current + 1}</span>
+        Pending: <span className="text-text-high">{pendingCount}</span>
         <span className="text-text-low"> / {total}</span>
       </div>
 

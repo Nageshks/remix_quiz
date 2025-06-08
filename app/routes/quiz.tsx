@@ -279,6 +279,7 @@ export default function QuizPage() {
                   total={quizItems.length}
                   onPrev={handlePrev}
                   onNext={handleNext}
+                  answeredCount={quizItems.filter(item => item.selectedOptionId !== undefined).length}
                 />
               </div>
             )}
