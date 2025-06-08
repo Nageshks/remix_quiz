@@ -2,7 +2,7 @@ import * as React from "react";
 
 type Option = { id: string; value: string };
 type Question = {
-  id: number;
+  id: string;
   question: string;
   options: Option[];
   answer: string;
@@ -33,8 +33,6 @@ export function QuizQuestionCard({
   // On question change, blur all options
   React.useEffect(() => {
     optionRefs.current.forEach(btn => btn && btn.blur());
-    // Optional: focus the first option instead
-    // optionRefs.current[0]?.focus();
   }, [question.id]);
 
   const handleSelect = (optionId: string, idx: number) => {

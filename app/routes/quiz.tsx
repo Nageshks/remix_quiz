@@ -10,11 +10,16 @@ import { QuizSettings } from "~/components/QuizSettings";
 // Types
 type Option = { id: string; value: string };
 type Question = {
-  id: number | string;
+  id: string;
   question: string;
   options: Option[];
   answer: string;
   explanation: string;
+};
+
+type QuizItem = {
+  question: Question;
+  selectedOptionId?: string;
 };
 
 function formatTime(sec: number) {
@@ -36,12 +41,10 @@ export default function QuizPage() {
   const count = Number(searchParams.get("count") || "20");
   const duration = count * 120; // 2 min/q
 
-  const [questions, setQuestions] = React.useState<Question[]>([]);
+  const [quizItems, setQuizItems] = React.useState<QuizItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [current, setCurrent] = React.useState(0);
-  // Store selected options by question id as string for robustness
-  const [selectedOptions, setSelectedOptions] = React.useState<Record<string, string>>({});
   const [showResult, setShowResult] = React.useState(false);
   const [timeElapsed, setTimeElapsed] = React.useState(0);
   const timerRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -54,7 +57,24 @@ export default function QuizPage() {
     API.get("module-questions", {
       params: { moduleIds, limit: count },
     })
-      .then((res) => setQuestions(res.data))
+      .then((res) => {
+        const questions = res.data;
+        const quizItems = questions.map((q: any) => {
+          // Ensure options have the correct format
+          const options = q.options.map((opt: any) => ({
+            id: opt.key || opt.id, // Use key if available, otherwise use id
+            value: opt.value
+          }));
+          return {
+            question: {
+              ...q,
+              id: String(q.id),
+              options
+            }
+          };
+        });
+        setQuizItems(quizItems);
+      })
       .catch(() => setError("Failed to load quiz questions."))
       .finally(() => setLoading(false));
   }, [moduleIds, count]);
@@ -70,11 +90,11 @@ export default function QuizPage() {
 
   // Auto-submit when time is up
   React.useEffect(() => {
-    if (timeElapsed >= duration && !showResult && questions.length > 0) {
+    if (timeElapsed >= duration && !showResult && quizItems.length > 0) {
       setShowResult(true);
       timerRef.current && clearInterval(timerRef.current);
     }
-  }, [timeElapsed, duration, showResult, questions.length]);
+  }, [timeElapsed, duration, showResult, quizItems.length]);
 
   // Focus management for autoNext (fixes focus bug)
   React.useEffect(() => {
@@ -87,17 +107,25 @@ export default function QuizPage() {
     }
   }, [current, autoNext]);
 
-  // Store by question id as string
   const handleSelect = (optionId: string) => {
-    if (!questions[current]) return;
-    setSelectedOptions((prev) => ({
-      ...prev,
-      [String(questions[current].id)]: optionId,
-    }));
+    if (!quizItems[current]) return;
+    
+    // Create a new array with the updated selection
+    const updatedItems = quizItems.map((item, idx) => {
+      if (idx === current) {
+        return {
+          ...item,
+          selectedOptionId: optionId
+        };
+      }
+      return item;
+    });
+    
+    setQuizItems(updatedItems);
   };
 
   const handlePrev = () => setCurrent((i) => Math.max(0, i - 1));
-  const handleNext = () => setCurrent((i) => Math.min(questions.length - 1, i + 1));
+  const handleNext = () => setCurrent((i) => Math.min(quizItems.length - 1, i + 1));
 
   const handleSubmit = () => {
     setShowResult(true);
@@ -105,11 +133,11 @@ export default function QuizPage() {
   };
 
   const handleAutoNext = () => {
-    if (current < questions.length - 1) setCurrent(current + 1);
+    if (current < quizItems.length - 1) setCurrent(current + 1);
   };
 
   const handleRestart = () => {
-    setSelectedOptions({});
+    setQuizItems(prev => prev.map(item => ({ ...item, selectedOptionId: undefined })));
     setShowResult(false);
     setCurrent(0);
     setTimeElapsed(0);
@@ -124,10 +152,8 @@ export default function QuizPage() {
     navigate("/quiz-setup");
   };
 
-  // Always compare and store keys as string for consistency
-  const allAnswered =
-    questions.length > 0 &&
-    questions.every((q) => selectedOptions[String(q.id)] !== undefined);
+  const allAnswered = quizItems.length > 0 && 
+    quizItems.every(item => Boolean(item.selectedOptionId));
 
   return (
     <main className="min-h-screen flex flex-col bg-background transition-colors">
@@ -138,7 +164,7 @@ export default function QuizPage() {
             {/* Left: Question number */}
             <div className="text-sm font-semibold text-text-low">
               Question <span className="text-text-high">{current + 1}</span>
-              <span className="text-text-low"> / {questions.length}</span>
+              <span className="text-text-low"> / {quizItems.length}</span>
             </div>
             {/* Center: Timer and settings */}
             <div className="flex items-center gap-3">
@@ -153,7 +179,7 @@ export default function QuizPage() {
               </span>
             </div>
             {/* Right: Navigation buttons */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <button
                 onClick={handlePrev}
                 disabled={current === 0}
@@ -173,11 +199,11 @@ export default function QuizPage() {
               </button>
               <button
                 onClick={handleNext}
-                disabled={current === questions.length - 1}
+                disabled={current === quizItems.length - 1}
                 aria-label="Next"
                 className={`
                   p-1.5 rounded-full transition
-                  ${current === questions.length - 1
+                  ${current === quizItems.length - 1
                     ? "bg-border text-text-low cursor-not-allowed"
                     : "bg-surface border border-border hover:border-primary text-text-high"
                   }
@@ -218,8 +244,8 @@ export default function QuizPage() {
             {!showResult && (
               <div className="flex flex-col gap-5 mt-24">
                 <QuizQuestionCard
-                  question={questions[current]}
-                  selectedOption={selectedOptions[String(questions[current]?.id)]}
+                  question={quizItems[current].question}
+                  selectedOption={quizItems[current].selectedOptionId}
                   onSelect={handleSelect}
                   autoNext={autoNext}
                   onAutoNext={handleAutoNext}
@@ -228,7 +254,7 @@ export default function QuizPage() {
 
                 <QuizNavigation
                   current={current}
-                  total={questions.length}
+                  total={quizItems.length}
                   onPrev={handlePrev}
                   onNext={handleNext}
                 />
@@ -237,8 +263,7 @@ export default function QuizPage() {
 
             {showResult && (
               <QuizResult
-                questions={questions}
-                selectedOptions={selectedOptions}
+                quizItems={quizItems}
                 onRestart={handleRestart}
                 onGoHome={handleGoHome}
                 onCustomize={handleCustomize}
