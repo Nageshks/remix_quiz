@@ -32,6 +32,17 @@ export default function QuizSetup() {
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [selectedCount, setSelectedCount] = React.useState(count || "20");
+  const [courseName, setCourseName] = React.useState<string>("");
+
+  // Fetch course name
+  React.useEffect(() => {
+    if (!courseId) return;
+    setLoading(true);
+    API.get(`courses/${courseId}`)
+      .then((res) => setCourseName(res.data.name))
+      .catch(() => setError("Failed to load course details"))
+      .finally(() => setLoading(false));
+  }, [courseId]);
 
   // Load semesters when courseId changes
   React.useEffect(() => {
@@ -128,6 +139,9 @@ export default function QuizSetup() {
     <main className="min-h-screen bg-background flex items-center justify-center px-2 py-8">
       <div className="w-full max-w-xl bg-surface rounded-2xl shadow-card p-6 sm:p-10">
         <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2 text-primary">Quiz Setup</h1>
+        {courseName && (
+          <h2 className="text-lg text-center mb-4 text-text-high">{courseName}</h2>
+        )}
         {error && (
           <div className="my-2 bg-border-error/10 border border-border-error text-border-error px-4 py-2 rounded">
             {error}
