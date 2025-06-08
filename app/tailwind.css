@@ -2,11 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body {
-  @apply bg-white dark:bg-gray-950;
+/* ===== CSS Variables: Theme System ===== */
+:root {
+  --color-primary: #2563eb; /* blue-600 */
+  --color-primary-foreground: #fff;
+  --color-secondary: #fbbf24; /* amber-400 */
+  --color-background: #f9fafb; /* gray-50 */
+  --color-surface: #fff;
+  --color-border: #e5e7eb; /* gray-200 */
+  --color-border-active: #2563eb;
+  --color-border-success: #22c55e; /* green-500 */
+  --color-border-error: #ef4444; /* red-500 */
+  --color-text-low: #6b7280; /* gray-500 */
+  --color-text-high: #111827; /* gray-900 */
+}
+.dark {
+  --color-primary: #60a5fa; /* blue-400 */
+  --color-primary-foreground: #1e293b; /* slate-800 */
+  --color-secondary: #fbbf24;
+  --color-background: #18181b; /* zinc-900 */
+  --color-surface: #27272a; /* zinc-800 */
+  --color-border: #3f3f46; /* zinc-700 */
+  --color-border-active: #60a5fa;
+  --color-border-success: #22c55e;
+  --color-border-error: #ef4444;
+  --color-text-low: #a1a1aa; /* zinc-400 */
+  --color-text-high: #f4f4f5; /* zinc-100 */
+}
 
-  @media (prefers-color-scheme: dark) {
+/* Make bg and color always use theme */
+html, body {
+  background-color: var(--color-background);
+  color: var(--color-text-high);
+  transition: background-color 0.2s, color 0.2s;
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Optional: Smooth font rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not(.light):not([data-theme="light"]) {
     color-scheme: dark;
   }
 }

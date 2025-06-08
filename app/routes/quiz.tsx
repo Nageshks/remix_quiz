@@ -1,161 +1,252 @@
 import * as React from "react";
-import { useSearchParams, useNavigate } from "@remix-run/react";
-import axios from "axios";
+import { useSearchParams, useNavigate, MetaFunction } from "@remix-run/react";
 import API from "~/api/quizApi";
+import { LoadingSpinner } from "~/components/LoadingSpinner";
+import { QuizQuestionCard } from "~/components/QuizQuestionCard";
+import { QuizNavigation } from "~/components/QuizNavigation";
+import { QuizResult } from "~/components/QuizResultModal";
+import { QuizSettings } from "~/components/QuizSettings";
 
-type Option = { key: string; value: string };
+// Types
+type Option = { id: string; value: string };
 type Question = {
-  id: number;
+  id: number | string;
   question: string;
   options: Option[];
-  answer: string; // correct answer, not shown to user
+  answer: string;
+  explanation: string;
 };
 
-export default function Quiz() {
+function formatTime(sec: number) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+export const meta: MetaFunction = () => [
+  { title: "Quiz" },
+  { name: "description", content: "Quiz App" },
+];
+
+export default function QuizPage() {
   const [searchParams] = useSearchParams();
-  const moduleIds = searchParams.get("moduleIds") || "";
   const navigate = useNavigate();
 
+  const moduleIds = searchParams.get("moduleIds");
+  const count = Number(searchParams.get("count") || "20");
+  const duration = count * 120; // 2 min/q
+
   const [questions, setQuestions] = React.useState<Question[]>([]);
-  const [current, setCurrent] = React.useState(0);
-  const [selected, setSelected] = React.useState<Record<number, string>>({});
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [submitted, setSubmitted] = React.useState(false);
-  const [score, setScore] = React.useState(0);
+  const [current, setCurrent] = React.useState(0);
+  // Store selected options by question id as string for robustness
+  const [selectedOptions, setSelectedOptions] = React.useState<Record<string, string>>({});
+  const [showResult, setShowResult] = React.useState(false);
+  const [timeElapsed, setTimeElapsed] = React.useState(0);
+  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [autoNext, setAutoNext] = React.useState(true);
 
+  // Fetch questions on mount
   React.useEffect(() => {
     if (!moduleIds) return;
     setLoading(true);
-    API
-      .get(`module-questions?moduleIds=${moduleIds}`)
-      .then(res => setQuestions(res.data))
-      .catch((e) => {
-        setError("Failed to load questions due to " + e.message);
-      })
+    API.get("module-questions", {
+      params: { moduleIds, limit: count },
+    })
+      .then((res) => setQuestions(res.data))
+      .catch(() => setError("Failed to load quiz questions."))
       .finally(() => setLoading(false));
-  }, [moduleIds]);
+  }, [moduleIds, count]);
 
-  const handleSelect = (qid: number, option: string) => {
-    setSelected(prev => ({ ...prev, [qid]: option }));
+  // Timer effect
+  React.useEffect(() => {
+    if (loading || showResult) return;
+    timerRef.current = setInterval(() => {
+      setTimeElapsed((sec) => sec + 1);
+    }, 1000);
+    return () => timerRef.current && clearInterval(timerRef.current);
+  }, [loading, showResult]);
+
+  // Auto-submit when time is up
+  React.useEffect(() => {
+    if (timeElapsed >= duration && !showResult && questions.length > 0) {
+      setShowResult(true);
+      timerRef.current && clearInterval(timerRef.current);
+    }
+  }, [timeElapsed, duration, showResult, questions.length]);
+
+  // Focus management for autoNext (fixes focus bug)
+  React.useEffect(() => {
+    if (autoNext) {
+      setTimeout(() => {
+        if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+      }, 10);
+    }
+  }, [current, autoNext]);
+
+  // Store by question id as string
+  const handleSelect = (optionId: string) => {
+    if (!questions[current]) return;
+    setSelectedOptions((prev) => ({
+      ...prev,
+      [String(questions[current].id)]: optionId,
+    }));
   };
+
+  const handlePrev = () => setCurrent((i) => Math.max(0, i - 1));
+  const handleNext = () => setCurrent((i) => Math.min(questions.length - 1, i + 1));
 
   const handleSubmit = () => {
-    let sc = 0;
-    for (const q of questions) {
-      if (selected[q.id] === q.answer) sc += 1;
-    }
-    setScore(sc);
-    setSubmitted(true);
+    setShowResult(true);
+    timerRef.current && clearInterval(timerRef.current);
   };
 
-  if (loading) {
-    return (
-        <div className="flex flex-1 w-full h-full justify-center items-center">
-            <p>Loading questions...</p>
-        </div>
-    );
-  }
-  if (error) {
-    return (
-      <div className="max-w-lg mx-auto mt-16 p-4 bg-red-100 border border-red-400 rounded text-red-700">
-        {error}
-      </div>
-    );
-  }
-  if (questions.length === 0) {
-    return (
-      <div className="max-w-lg mx-auto mt-16 p-4 bg-gray-100 border border-gray-300 rounded text-gray-700">
-        No questions found for the selected module(s).
-      </div>
-    );
-  }
+  const handleAutoNext = () => {
+    if (current < questions.length - 1) setCurrent(current + 1);
+  };
 
-  const q = questions[current];
+  const handleRestart = () => {
+    setSelectedOptions({});
+    setShowResult(false);
+    setCurrent(0);
+    setTimeElapsed(0);
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+
+  const handleGoHome = () => {
+    navigate("/");
+  };
+
+  const handleCustomize = () => {
+    navigate("/quiz-setup");
+  };
+
+  // Always compare and store keys as string for consistency
+  const allAnswered =
+    questions.length > 0 &&
+    questions.every((q) => selectedOptions[String(q.id)] !== undefined);
 
   return (
-    <div className="max-w-lg mx-auto mt-16 bg-white dark:bg-gray-900 p-6 rounded shadow">
-      <div className="mb-4 flex items-center justify-between">
-        <span className="text-gray-600 dark:text-gray-300">Question {current + 1} of {questions.length}</span>
-        {submitted && (
-          <span className="font-semibold text-blue-600">
-            Score: {score} / {questions.length}
-          </span>
+    <main className="min-h-screen flex flex-col bg-background transition-colors">
+      <section className="w-full max-w-2xl mx-auto px-4 py-8 flex-1 flex flex-col justify-center relative">
+        {/* Navbar + Timer */}
+        {!loading && !error && (
+          <div className="absolute top-6 left-0 right-0 flex items-center justify-between px-2">
+            {/* Left: Question number */}
+            <div className="text-sm font-semibold text-text-low">
+              Question <span className="text-text-high">{current + 1}</span>
+              <span className="text-text-low"> / {questions.length}</span>
+            </div>
+            {/* Center: Timer and settings */}
+            <div className="flex items-center gap-3">
+              <QuizSettings autoNext={autoNext} setAutoNext={setAutoNext} />
+              <span className="font-semibold text-text-high">
+                Time {timeElapsed < duration ? "Left" : "Elapsed"}:
+              </span>
+              <span className={timeElapsed >= duration * 0.8 ? "text-red-600 font-bold" : "text-primary font-bold"}>
+                {timeElapsed < duration
+                  ? formatTime(duration - timeElapsed)
+                  : formatTime(timeElapsed)}
+              </span>
+            </div>
+            {/* Right: Navigation buttons */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handlePrev}
+                disabled={current === 0}
+                aria-label="Previous"
+                className={`
+                  p-1.5 rounded-full transition 
+                  ${current === 0
+                    ? "bg-border text-text-low cursor-not-allowed"
+                    : "bg-surface border border-border hover:border-primary text-text-high"
+                  }
+                  flex items-center justify-center
+                `}
+              >
+                <svg width={18} height={18} fill="none" viewBox="0 0 18 18">
+                  <path d="M11.5 14L7 9l4.5-5" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <button
+                onClick={handleNext}
+                disabled={current === questions.length - 1}
+                aria-label="Next"
+                className={`
+                  p-1.5 rounded-full transition
+                  ${current === questions.length - 1
+                    ? "bg-border text-text-low cursor-not-allowed"
+                    : "bg-surface border border-border hover:border-primary text-text-high"
+                  }
+                  flex items-center justify-center
+                `}
+              >
+                <svg width={18} height={18} fill="none" viewBox="0 0 18 18">
+                  <path d="M6.5 4l4.5 5-4.5 5" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={!allAnswered || showResult}
+                className={`
+                  ml-2 px-3 py-1.5 rounded text-sm font-semibold transition
+                  ${allAnswered && !showResult
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "bg-border text-text-low cursor-not-allowed"
+                  }
+                `}
+              >
+                Submit
+              </button>
+            </div>
+          </div>
         )}
-      </div>
-      <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">{q.question}</h2>
-      <div className="space-y-2">
-        {q.options.map(option => (
-          <label
-            key={option.key}
-            className={`flex items-center p-4 rounded cursor-pointer border 
-              ${selected[q.id] === option.key
-                ? "border-blue-500 bg-blue-100 dark:bg-blue-900"
-                : "border-gray-600 dark:border-gray-700"
-              }
-              ${submitted && option.key === q.answer ? "ring-2 ring-green-400" : ""}
-            `}
-          >
-            <input
-              type="radio"
-              name={`q${q.id}`}
-              value={option.value}
-              disabled={submitted}
-              checked={selected[q.id] === option.key}
-              onChange={() => handleSelect(q.id, option.key)}
-              className="mx-2 accent-blue-600"
-            />
-            <span className={`
-              ${submitted 
-                ? option.key === q.answer 
-                  ? "font-bold text-green-700 dark:text-green-400" 
-                  : selected[q.id] === option.key
-                    ? "text-red-600 dark:text-red-400" : ""
-                : ""}
-            `}>
-              {option.value}
-            </span>
-          </label>
-        ))}
-      </div>
-      <div className="flex gap-2 mt-6">
-        <button
-          onClick={() => setCurrent(c => Math.max(0, c - 1))}
-          disabled={current === 0}
-          className="px-4 py-2 rounded bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 disabled:opacity-50"
-        >
-          Previous
-        </button>
-        {current < questions.length - 1 && (
-          <button
-            onClick={() => setCurrent(c => Math.min(questions.length - 1, c + 1))}
-            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-          >
-            Next
-          </button>
+
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <LoadingSpinner />
+          </div>
+        ) : error ? (
+          <div className="text-center bg-border-error/10 text-border-error border border-border-error rounded p-3 mb-4 max-w-md mx-auto">
+            {error}
+          </div>
+        ) : (
+          <>
+            {!showResult && (
+              <div className="flex flex-col gap-5 mt-24">
+                <QuizQuestionCard
+                  question={questions[current]}
+                  selectedOption={selectedOptions[String(questions[current]?.id)]}
+                  onSelect={handleSelect}
+                  autoNext={autoNext}
+                  onAutoNext={handleAutoNext}
+                  disabled={showResult}
+                />
+
+                <QuizNavigation
+                  current={current}
+                  total={questions.length}
+                  onPrev={handlePrev}
+                  onNext={handleNext}
+                />
+              </div>
+            )}
+
+            {showResult && (
+              <QuizResult
+                questions={questions}
+                selectedOptions={selectedOptions}
+                onRestart={handleRestart}
+                onGoHome={handleGoHome}
+                onCustomize={handleCustomize}
+              />
+            )}
+          </>
         )}
-        {current === questions.length - 1 && !submitted && (
-          <button
-            onClick={handleSubmit}
-            disabled={
-              Object.keys(selected).length !== questions.length
-            }
-            className="ml-auto px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
-          >
-            Submit
-          </button>
-        )}
-      </div>
-      {submitted && (
-        <div className="mt-6">
-          <button
-            onClick={() => navigate("/")}
-            className="w-full py-2 rounded bg-blue-600 text-white mt-2 hover:bg-blue-700"
-          >
-            Go to Home
-          </button>
-        </div>
-      )}
-    </div>
+      </section>
+    </main>
   );
 }

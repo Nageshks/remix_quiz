@@ -1,16 +1,13 @@
 import type { MetaFunction } from "@remix-run/node";
-import axios from "axios";
 import * as React from "react";
-import { useEffect, useState } from "react";
 import API from "~/api/quizApi";
+import { CourseCard } from "~/components/CourseCard";
+import { LoadingSpinner } from "~/components/LoadingSpinner";
 
-
-export const meta: MetaFunction = () => {
-  return [
-    { title: "Quiz App" },
-    { name: "description", content: "Quiz App" },
-  ];
-};
+export const meta: MetaFunction = () => [
+  { title: "Quiz App" },
+  { name: "description", content: "Quiz App" },
+];
 
 type Course = {
   id: number;
@@ -19,11 +16,11 @@ type Course = {
 };
 
 export default function Home() {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [courses, setCourses] = React.useState<Course[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     API.get("courses")
       .then((res) => setCourses(res.data))
       .catch(() => setError("Failed to load courses"))
@@ -31,26 +28,34 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="max-w-xl mx-auto mt-16 p-6 rounded shadow">
-      <h1 className="text-3xl font-bold text-center mb-2">Quiz App</h1>
-      <h2 className="text-xl text-center text-gray-600 mb-6">Choose a Course to Begin</h2>
-      {loading && <div className="text-center">Loading…</div>}
-      {error && <div className="text-center text-red-500">{error}</div>}
-      <ul>
-        {courses.map((course) => (
-          <li key={course.id} className="mb-2">
-            <a
-              href={`/quiz-setup?courseId=${course.id}`}
-              className="block p-4 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
-            >
-              <span className="font-medium">{course.name}</span>
-              {course.description && (
-                <div className="text-sm text-blue-200">{course.description}</div>
-              )}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <main className="min-h-screen bg-background transition-colors flex flex-col">
+      <section className="w-full max-w-2xl mx-auto px-4 py-16 sm:py-24 flex-1 flex flex-col">
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-extrabold text-primary mb-2">Quiz App</h1>
+          <p className="text-lg text-text-low">Choose a Course to Begin</p>
+        </div>
+        {loading && (
+          <div className="text-center text-text-low">
+            <LoadingSpinner />
+          </div>
+        )}
+        {error && (
+          <div className="text-center bg-border-error/10 text-border-error border border-border-error rounded p-3 mb-4 max-w-md mx-auto">
+            {error}
+          </div>
+        )}
+        <ul className="grid gap-6 grid-cols-1 flex-1">
+          {courses.map((course) => (
+            <li key={course.id}>
+              <CourseCard
+                name={course.name}
+                description={course.description}
+                href={`/quiz-setup?courseId=${course.id}`}
+              />
+            </li>
+          ))}
+        </ul>
+      </section>
+    </main>
   );
 }
