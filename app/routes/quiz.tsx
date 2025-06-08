@@ -280,6 +280,7 @@ export default function QuizPage() {
                   onPrev={handlePrev}
                   onNext={handleNext}
                   answeredCount={quizItems.filter(item => item.selectedOptionId !== undefined).length}
+                  onSubmit={handleSubmit}
                 />
               </div>
             )}
