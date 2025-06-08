@@ -149,7 +149,29 @@ export default function QuizPage() {
   };
 
   const handleCustomize = () => {
-    navigate("/quiz-setup");
+    // Get the current parameters from the URL
+    const currentParams = new URLSearchParams(searchParams);
+    const params = new URLSearchParams();
+    
+    // Add all required parameters
+    if (currentParams.has('courseId')) {
+      params.set('courseId', currentParams.get('courseId')!);
+    }
+    if (currentParams.has('semesterId')) {
+      params.set('semesterId', currentParams.get('semesterId')!);
+    }
+    if (currentParams.has('subjectId')) {
+      params.set('subjectId', currentParams.get('subjectId')!);
+    }
+    if (currentParams.has('moduleIds')) {
+      params.set('moduleIds', currentParams.get('moduleIds')!);
+    }
+    if (currentParams.has('count')) {
+      params.set('count', currentParams.get('count')!);
+    }
+    
+    // Navigate to quiz-setup with all parameters
+    navigate(`/quiz-setup?${params.toString()}`);
   };
 
   const allAnswered = quizItems.length > 0 && 

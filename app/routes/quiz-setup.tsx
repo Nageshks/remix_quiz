@@ -17,48 +17,110 @@ export const meta: MetaFunction = () => [
 export default function QuizSetup() {
   const [searchParams] = useSearchParams();
   const courseId = searchParams.get("courseId");
+  const semesterId = searchParams.get("semesterId");
+  const subjectId = searchParams.get("subjectId");
+  const moduleIds = searchParams.get("moduleIds");
+  const count = searchParams.get("count");
   const navigate = useNavigate();
 
   const [semesters, setSemesters] = React.useState<Semester[]>([]);
   const [subjects, setSubjects] = React.useState<Subject[]>([]);
   const [modules, setModules] = React.useState<Module[]>([]);
-  const [selectedSemester, setSelectedSemester] = React.useState("");
-  const [selectedSubject, setSelectedSubject] = React.useState("");
-  const [selectedModules, setSelectedModules] = React.useState<string[]>([]);
+  const [selectedSemester, setSelectedSemester] = React.useState(semesterId || "");
+  const [selectedSubject, setSelectedSubject] = React.useState(subjectId || "");
+  const [selectedModules, setSelectedModules] = React.useState<string[]>(moduleIds ? moduleIds.split(",") : []);
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
-  const [selectedCount, setSelectedCount] = React.useState("20");
+  const [selectedCount, setSelectedCount] = React.useState(count || "20");
 
+  // Load semesters when courseId changes
   React.useEffect(() => {
     if (!courseId) return;
     setLoading(true);
     API.get(`courses/${courseId}/semesters`)
-      .then((res) => setSemesters(res.data))
-      .catch(() => setError("Failed to load semesters"))
+      .then((res) => {
+        setSemesters(res.data);
+        // If we have a semesterId from URL, select it and load subjects
+        if (semesterId) {
+          setSelectedSemester(semesterId);
+          return API.get(`semesters/${semesterId}/subjects`);
+        }
+      })
+      .then((res) => {
+        if (res) {
+          setSubjects(res.data);
+          // If we have a subjectId from URL, select it and load modules
+          if (subjectId) {
+            setSelectedSubject(subjectId);
+            return API.get(`subjects/${subjectId}/modules`);
+          }
+        }
+      })
+      .then((res) => {
+        if (res) {
+          setModules(res.data);
+        }
+      })
+      .catch(() => setError("Failed to load data"))
       .finally(() => setLoading(false));
-  }, [courseId]);
+  }, [courseId, semesterId, subjectId]);
 
+  // Load subjects when semester changes
   React.useEffect(() => {
-    if (!selectedSemester) return;
+    if (!selectedSemester) {
+      setSubjects([]);
+      setSelectedSubject("");
+      setModules([]);
+      setSelectedModules([]);
+      return;
+    }
     setLoading(true);
     API.get(`semesters/${selectedSemester}/subjects`)
-      .then((res) => setSubjects(res.data))
+      .then((res) => {
+        setSubjects(res.data);
+        // If we have a subjectId from URL and it matches current semester, select it
+        if (subjectId && res.data.some((s: Subject) => String(s.id) === subjectId)) {
+          setSelectedSubject(subjectId);
+        } else {
+          setSelectedSubject("");
+        }
+      })
       .catch(() => setError("Failed to load subjects"))
       .finally(() => setLoading(false));
-  }, [selectedSemester]);
+  }, [selectedSemester, subjectId]);
 
+  // Load modules when subject changes
   React.useEffect(() => {
-    if (!selectedSubject) return;
+    if (!selectedSubject) {
+      setModules([]);
+      setSelectedModules([]);
+      return;
+    }
     setLoading(true);
     API.get(`subjects/${selectedSubject}/modules`)
-      .then((res) => setModules(res.data))
+      .then((res) => {
+        setModules(res.data);
+        // If we have moduleIds from URL, verify they belong to current subject
+        if (moduleIds) {
+          const validModuleIds = moduleIds.split(",").filter(id => 
+            res.data.some((m: Module) => String(m.id) === id)
+          );
+          setSelectedModules(validModuleIds);
+        }
+      })
       .catch(() => setError("Failed to load modules"))
       .finally(() => setLoading(false));
-  }, [selectedSubject]);
+  }, [selectedSubject, moduleIds]);
 
   const handleStartQuiz = () => {
     if (selectedModules.length === 0) return;
-    navigate(`/quiz?moduleIds=${selectedModules.join(",")}&count=${selectedCount}`);
+    const params = new URLSearchParams();
+    if (courseId) params.set("courseId", courseId);
+    if (selectedSemester) params.set("semesterId", selectedSemester);
+    if (selectedSubject) params.set("subjectId", selectedSubject);
+    params.set("moduleIds", selectedModules.join(","));
+    params.set("count", selectedCount);
+    navigate(`/quiz?${params.toString()}`);
   };
   
 
