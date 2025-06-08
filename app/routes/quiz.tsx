@@ -49,6 +49,20 @@ export default function QuizPage() {
   const [timeElapsed, setTimeElapsed] = React.useState(0);
   const timerRef = React.useRef<NodeJS.Timeout | null>(null);
   const [autoNext, setAutoNext] = React.useState(true);
+  const [moduleNames, setModuleNames] = React.useState<string[]>([]);
+
+  // Fetch module names
+  React.useEffect(() => {
+    if (!moduleIds) return;
+    const moduleIdArray = moduleIds.split(",");
+    Promise.all(
+      moduleIdArray.map(id => 
+        API.get(`modules/${id}`).then(res => res.data.name)
+      )
+    )
+      .then(names => setModuleNames(names))
+      .catch(() => setError("Failed to load module names"));
+  }, [moduleIds]);
 
   // Fetch questions on mount
   React.useEffect(() => {
@@ -180,9 +194,25 @@ export default function QuizPage() {
   return (
     <main className="min-h-screen flex flex-col bg-background transition-colors">
       <section className="w-full max-w-2xl mx-auto px-4 py-8 flex-1 flex flex-col justify-center relative">
+        {/* Module Title */}
+        {!loading && !error && moduleNames.length > 0 && (
+          <div className="absolute top-0 left-0 right-0 text-center mb-4">
+            <h1 className="pt-4 pb-2 text-xl font-bold text-primary">
+              {moduleNames.length === 1 
+                ? moduleNames[0]
+                : `${moduleNames.length} Modules Quiz`}
+            </h1>
+            {moduleNames.length > 1 && (
+              <p className="text-sm text-text-low mt-1">
+                {moduleNames.join(", ")}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Navbar + Timer */}
         {!loading && !error && (
-          <div className="absolute top-6 left-0 right-0 flex items-center justify-between px-2">
+          <div className="absolute top-20 left-0 right-0 flex items-center justify-between px-2">
             {/* Left: Question number */}
             <div className="text-sm font-semibold text-text-low">
               Question <span className="text-text-high">{current + 1}</span>

@@ -34,7 +34,7 @@ export function QuizResult({
   const accuracy = total > 0 ? ((correct / total) * 100).toFixed(0) : "0";
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-surface rounded-xl shadow-card mt-8">
+    <div className="max-w-xl mx-auto p-6 bg-surface rounded-xl shadow-card mt-24">
       <h2 className="text-2xl font-bold text-primary mb-2">Quiz Results</h2>
       <div className="mb-6">
         <div className="mb-1 font-semibold text-lg">
