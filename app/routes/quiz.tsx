@@ -231,7 +231,7 @@ export default function QuizPage() {
               </span>
             </div>
             {/* Right: Navigation buttons */}
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <button
                 onClick={handlePrev}
                 disabled={current === 0}
@@ -278,8 +278,8 @@ export default function QuizPage() {
                 `}
               >
                 Submit
-              </button>
-            </div>
+              </button> */}
+            {/* </div> */}
           </div>
         )}
 

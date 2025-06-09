@@ -37,16 +37,16 @@ export function QuizResult({
     <div className="max-w-xl mx-auto p-6 bg-surface rounded-xl shadow-card mt-24">
       <h2 className="text-2xl font-bold text-primary mb-2">Quiz Results</h2>
       <div className="mb-6">
-        <div className="mb-1 font-semibold text-lg">
+        <div className="mb-1 font-semibold text-lg text-text-high">
           Score: <span className="text-primary">{correct}</span> / {total}
         </div>
-        <div className="mb-1 font-semibold">
+        <div className="mb-1 font-semibold text-text-high">
           Accuracy: <span className="text-primary">{accuracy}%</span>
         </div>
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold mb-2">Review Answers</h3>
+        <h3 className="text-lg font-semibold mb-2 text-text-high">Review Answers</h3>
         <ol className="space-y-4">
           {quizItems.map((item, idx) => {
             const selected = item.selectedOptionId;
@@ -60,14 +60,14 @@ export function QuizResult({
                   Q{idx + 1}. {item.question.question}
                 </div>
                 <div className="flex flex-col gap-1 ml-3 text-sm">
-                  <div>
+                  <div className="text-text-high">
                     Your answer:{" "}
                     <span className={isCorrect ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
                       {selectedOption ? selectedOption.value : <span className="text-text-low">Not answered</span>}
                     </span>
                   </div>
                   {!isCorrect && (
-                    <div>
+                    <div className="text-text-high">
                       Correct answer:{" "}
                       <span className="text-primary font-semibold">
                         {correctOption ? correctOption.value : <span className="text-text-low">N/A</span>}
