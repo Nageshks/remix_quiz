@@ -1,4 +1,5 @@
 import * as React from "react";
+import { renderTextWithLatex } from "~/utils/latexUtils";
 
 type Option = { id: string; value: string };
 type Question = {
@@ -57,26 +58,26 @@ export function QuizResult({
             return (
               <li key={item.question.id} className="bg-muted rounded-lg p-3">
                 <div className="mb-1 font-bold text-text-high">
-                  Q{idx + 1}. {item.question.question}
+                  Q{idx + 1}. {renderTextWithLatex(item.question.question)}
                 </div>
                 <div className="flex flex-col gap-1 ml-3 text-sm">
                   <div className="text-text-high">
                     Your answer:{" "}
                     <span className={isCorrect ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
-                      {selectedOption ? selectedOption.value : <span className="text-text-low">Not answered</span>}
+                      {selectedOption ? renderTextWithLatex(selectedOption.value) : <span className="text-text-low">Not answered</span>}
                     </span>
                   </div>
                   {!isCorrect && (
                     <div className="text-text-high">
                       Correct answer:{" "}
                       <span className="text-primary font-semibold">
-                        {correctOption ? correctOption.value : <span className="text-text-low">N/A</span>}
+                        {correctOption ? renderTextWithLatex(correctOption.value) : <span className="text-text-low">N/A</span>}
                       </span>
                     </div>
                   )}
                   {item.question.explanation && (
                     <div className="text-gray-700 mt-1">
-                      <span className="font-medium">Explanation:</span> {item.question.explanation}
+                      <span className="font-medium">Explanation:</span> {renderTextWithLatex(item.question.explanation)}
                     </div>
                   )}
                 </div>

@@ -1,5 +1,5 @@
 import * as React from "react";
-import TeX from "@matejmazur/react-katex";
+import { renderTextWithLatex } from "~/utils/latexUtils";
 import "katex/dist/katex.min.css";
 
 type Option = { id: string; value: string };
@@ -20,25 +20,7 @@ interface QuizQuestionCardProps {
   onAutoNext?: () => void;
 }
 
-function renderWithLatex(text: string) {
-  // First, handle the case where LaTeX commands are escaped with double backslashes
-  const processedText = text.replace(/\\([\\{}_^])/g, '$1');
-  
-  // Split by $...$ and render inline math where found
-  const parts = processedText.split(/(\$.*?\$)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith("$") && part.endsWith("$")) {
-      try {
-        const mathContent = part.slice(1, -1).trim();
-        return <TeX key={i} math={mathContent} />;
-      } catch (e) {
-        console.warn("Error rendering LaTeX:", part, e);
-        return <span key={i} className="text-red-500">{part}</span>;
-      }
-    }
-    return <React.Fragment key={i}>{part}</React.Fragment>;
-  });
-}
+
 
 export function QuizQuestionCard({
   question,
@@ -69,9 +51,7 @@ export function QuizQuestionCard({
   return (
     <div className="bg-surface rounded-xl shadow-card p-5 min-h-[120px] flex flex-col justify-center">
       <div className="font-bold text-lg text-text-high mb-3">
-        {question.question.startsWith('$$') && question.question.endsWith('$$')
-          ? <TeX math={question.question.slice(2, -2)} block />
-          : renderWithLatex(question.question)}
+        {renderTextWithLatex(question.question)}
       </div>
       <div className="flex flex-col gap-2" role="radiogroup">
         {question.options.map((opt, idx) => {
@@ -101,9 +81,7 @@ export function QuizQuestionCard({
               disabled={disabled}
             >
               <span>
-                {opt.value.startsWith('$$') && opt.value.endsWith('$$')
-                  ? <TeX math={opt.value.slice(2, -2)} block />
-                  : renderWithLatex(opt.value)}
+                {renderTextWithLatex(opt.value)}
               </span>
             </button>
           );
