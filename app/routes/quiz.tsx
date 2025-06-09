@@ -96,10 +96,18 @@ export default function QuizPage() {
   // Timer effect
   React.useEffect(() => {
     if (loading || showResult) return;
-    timerRef.current = setInterval(() => {
+    
+    const timerId = setInterval(() => {
       setTimeElapsed((sec) => sec + 1);
     }, 1000);
-    return () => timerRef.current && clearInterval(timerRef.current);
+    
+    timerRef.current = timerId;
+    
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
   }, [loading, showResult]);
 
   // Auto-submit when time is up
