@@ -20,8 +20,6 @@ interface QuizQuestionCardProps {
   onAutoNext?: () => void;
 }
 
-
-
 export function QuizQuestionCard({
   question,
   selectedOption,
@@ -38,6 +36,24 @@ export function QuizQuestionCard({
     optionRefs.current.forEach(btn => btn && btn.blur());
   }, [question.id]);
 
+  // Handle keyboard shortcuts
+  React.useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (disabled) return;
+      
+      // Check if the key is a number between 1-4
+      const numKey = parseInt(e.key);
+      if (numKey >= 1 && numKey <= 4 && numKey <= question.options.length) {
+        e.preventDefault();
+        const optionId = question.options[numKey - 1].id;
+        handleSelect(optionId, numKey - 1);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [question.options, disabled]);
+
   const handleSelect = (optionId: string, idx: number) => {
     if (disabled) return;
     onSelect(optionId);
@@ -46,6 +62,11 @@ export function QuizQuestionCard({
         onAutoNext();
       }, 150);
     }
+  };
+
+  // Get option label (A, B, C, D)
+  const getOptionLabel = (index: number) => {
+    return String.fromCharCode(65 + index); // 65 is ASCII for 'A'
   };
 
   return (
@@ -80,8 +101,14 @@ export function QuizQuestionCard({
               }}
               disabled={disabled}
             >
+              <span className="flex items-center justify-center w-6 h-6 rounded-full border border-border text-sm font-medium">
+                {getOptionLabel(idx)}
+              </span>
               <span>
                 {renderTextWithLatex(opt.value)}
+              </span>
+              <span className="ml-auto text-sm text-text-low">
+                Press {idx + 1}
               </span>
             </button>
           );
