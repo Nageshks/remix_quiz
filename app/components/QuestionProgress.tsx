@@ -21,8 +21,17 @@ export function QuestionProgress({
 
   const pendingCount = answeredQuestions.filter(answered => !answered).length;
 
+  const handleOutsideClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onClick={handleOutsideClick}
+    >
       <div className="bg-surface rounded-xl p-6 max-w-md w-full mx-4 shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -36,7 +45,7 @@ export function QuestionProgress({
             className="p-1 hover:bg-primary/10 rounded-full transition"
             aria-label="Close"
           >
-            <svg width={24} height={24} fill="none" viewBox="0 0 24 24">
+            <svg width={24} height={24} fill="none" viewBox="0 0 24 24" className="text-text-high">
               <path
                 d="M18 6L6 18M6 6l12 12"
                 stroke="currentColor"

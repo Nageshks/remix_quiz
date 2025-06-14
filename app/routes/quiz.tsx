@@ -297,10 +297,10 @@ export default function QuizPage() {
         {/* Help Button */}
         <button
           onClick={() => setShowHelp(true)}
-          className="fixed bottom-6 right-6 p-3 bg-surface border border-border rounded-full shadow-lg hover:border-primary transition-colors"
+          className="fixed bottom-6 right-6 p-3 bg-surface border border-border rounded-full shadow-lg hover:border-primary transition-colors text-text-high"
           aria-label="Show keyboard shortcuts"
         >
-          <svg width={24} height={24} fill="none" viewBox="0 0 24 24">
+          <svg width={24} height={24} fill="none" viewBox="0 0 24 24" className="text-text-high">
             <path
               d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
               stroke="currentColor"
