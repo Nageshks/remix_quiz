@@ -23,10 +23,12 @@ export function QuizNavigation({
   return (
     <div className="flex items-center justify-between w-full mb-1">
       {/* Left: Pending questions info */}
-      <div className="text-sm font-semibold text-text-low">
-        Pending: <span className="text-text-high">{pendingCount}</span>
+      {/* <div className="text-sm font-semibold text-text-low">
+        Pending: <span className="text-text-high">{pendingCount}</span> */}
         {/* <span className="text-text-low"> / {total}</span> */}
-      </div>
+      {/* </div> */}
+
+      <div></div>
 
       <div className="flex items-center gap-2">
         {allAnswered ? (

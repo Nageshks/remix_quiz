@@ -7,6 +7,7 @@ import { QuizNavigation } from "~/components/QuizNavigation";
 import { QuizResult } from "~/components/QuizResultModal";
 import { QuizSettings } from "~/components/QuizSettings";
 import { HelpDialog } from "~/components/HelpDialog";
+import { QuestionProgress } from "~/components/QuestionProgress";
 
 // Types
 type Option = { id: string; value: string };
@@ -52,6 +53,7 @@ export default function QuizPage() {
   const [autoNext, setAutoNext] = React.useState(true);
   const [moduleNames, setModuleNames] = React.useState<string[]>([]);
   const [showHelp, setShowHelp] = React.useState(false);
+  const [showQuestionProgress, setShowQuestionProgress] = React.useState(false);
 
   const allAnswered = quizItems.length > 0 && 
     quizItems.every(item => Boolean(item.selectedOptionId));
@@ -232,43 +234,18 @@ export default function QuizPage() {
     navigate(`/quiz-setup?${params.toString()}`);
   };
 
+  const handleQuestionClick = (index: number) => {
+    setCurrent(index);
+  };
+
+  // Get array of answered questions
+  const answeredQuestions = React.useMemo(() => {
+    return quizItems.map(item => Boolean(item.selectedOptionId));
+  }, [quizItems]);
+
   return (
     <main className="min-h-screen flex flex-col bg-background transition-colors">
       <section className="w-full max-w-2xl mx-auto px-4 py-8 flex-1 flex flex-col justify-center relative">
-        {/* Help Button */}
-        <button
-          onClick={() => setShowHelp(true)}
-          className="fixed bottom-6 right-6 p-3 bg-surface border border-border rounded-full shadow-lg hover:border-primary transition-colors"
-          aria-label="Show keyboard shortcuts"
-        >
-          <svg width={24} height={24} fill="none" viewBox="0 0 24 24">
-            <path
-              d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M12 16v.01"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M12 8a4 4 0 00-4 4"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-
-        {/* Help Dialog */}
-        <HelpDialog isOpen={showHelp} onClose={() => setShowHelp(false)} />
-
         {/* Module Title */}
         {!loading && !error && moduleNames.length > 0 && (
           <div className="absolute top-0 left-0 right-0 text-center mb-4">
@@ -305,58 +282,63 @@ export default function QuizPage() {
                   : formatTime(timeElapsed)}
               </span>
             </div>
-            {/* Right: Navigation buttons */}
-            {/* <div className="flex items-center gap-2">
+            {/* Right: Pending count */}
+            {!showResult && (
               <button
-                onClick={handlePrev}
-                disabled={current === 0}
-                aria-label="Previous"
-                className={`
-                  p-1.5 rounded-full transition 
-                  ${current === 0
-                    ? "bg-border text-text-low cursor-not-allowed"
-                    : "bg-surface border border-border hover:border-primary text-text-high"
-                  }
-                  flex items-center justify-center
-                `}
+                onClick={() => setShowQuestionProgress(true)}
+                className="text-sm font-semibold text-text-low hover:text-primary transition-colors"
               >
-                <svg width={18} height={18} fill="none" viewBox="0 0 18 18">
-                  <path d="M11.5 14L7 9l4.5-5" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                Pending: <span className="text-text-high">{quizItems.length - answeredQuestions.filter(Boolean).length}</span>
               </button>
-              <button
-                onClick={handleNext}
-                disabled={current === quizItems.length - 1}
-                aria-label="Next"
-                className={`
-                  p-1.5 rounded-full transition
-                  ${current === quizItems.length - 1
-                    ? "bg-border text-text-low cursor-not-allowed"
-                    : "bg-surface border border-border hover:border-primary text-text-high"
-                  }
-                  flex items-center justify-center
-                `}
-              >
-                <svg width={18} height={18} fill="none" viewBox="0 0 18 18">
-                  <path d="M6.5 4l4.5 5-4.5 5" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={!allAnswered || showResult}
-                className={`
-                  ml-2 px-3 py-1.5 rounded text-sm font-semibold transition
-                  ${allAnswered && !showResult
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-border text-text-low cursor-not-allowed"
-                  }
-                `}
-              >
-                Submit
-              </button> */}
-            {/* </div> */}
+            )}
           </div>
         )}
+
+        {/* Help Button */}
+        <button
+          onClick={() => setShowHelp(true)}
+          className="fixed bottom-6 right-6 p-3 bg-surface border border-border rounded-full shadow-lg hover:border-primary transition-colors"
+          aria-label="Show keyboard shortcuts"
+        >
+          <svg width={24} height={24} fill="none" viewBox="0 0 24 24">
+            <path
+              d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12 16v.01"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12 8a4 4 0 00-4 4"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+
+        {/* Question Progress Dialog */}
+        {!loading && !error && !showResult && (
+          <QuestionProgress
+            total={quizItems.length}
+            current={current}
+            answeredQuestions={answeredQuestions}
+            onQuestionClick={handleQuestionClick}
+            isOpen={showQuestionProgress}
+            onClose={() => setShowQuestionProgress(false)}
+          />
+        )}
+
+        {/* Help Dialog */}
+        <HelpDialog isOpen={showHelp} onClose={() => setShowHelp(false)} />
 
         {loading ? (
           <div className="flex items-center justify-center h-64">
