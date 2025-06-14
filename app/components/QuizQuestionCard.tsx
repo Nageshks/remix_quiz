@@ -101,14 +101,18 @@ export function QuizQuestionCard({
               }}
               disabled={disabled}
             >
-              <span className="flex items-center justify-center w-6 h-6 rounded-full border border-border text-sm font-medium">
+              <span className={`
+                flex items-center justify-center w-6 h-6 rounded-full border-2
+                ${selected 
+                  ? "border-primary bg-primary text-primary-foreground" 
+                  : "border-border text-text-low"
+                }
+                transition-colors
+              `}>
                 {getOptionLabel(idx)}
               </span>
               <span>
                 {renderTextWithLatex(opt.value)}
-              </span>
-              <span className="ml-auto text-sm text-text-low">
-                Press {idx + 1}
               </span>
             </button>
           );

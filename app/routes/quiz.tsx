@@ -6,6 +6,7 @@ import { QuizQuestionCard } from "~/components/QuizQuestionCard";
 import { QuizNavigation } from "~/components/QuizNavigation";
 import { QuizResult } from "~/components/QuizResultModal";
 import { QuizSettings } from "~/components/QuizSettings";
+import { HelpDialog } from "~/components/HelpDialog";
 
 // Types
 type Option = { id: string; value: string };
@@ -50,6 +51,7 @@ export default function QuizPage() {
   const timerRef = React.useRef<NodeJS.Timeout | null>(null);
   const [autoNext, setAutoNext] = React.useState(true);
   const [moduleNames, setModuleNames] = React.useState<string[]>([]);
+  const [showHelp, setShowHelp] = React.useState(false);
 
   const allAnswered = quizItems.length > 0 && 
     quizItems.every(item => Boolean(item.selectedOptionId));
@@ -233,6 +235,40 @@ export default function QuizPage() {
   return (
     <main className="min-h-screen flex flex-col bg-background transition-colors">
       <section className="w-full max-w-2xl mx-auto px-4 py-8 flex-1 flex flex-col justify-center relative">
+        {/* Help Button */}
+        <button
+          onClick={() => setShowHelp(true)}
+          className="fixed bottom-6 right-6 p-3 bg-surface border border-border rounded-full shadow-lg hover:border-primary transition-colors"
+          aria-label="Show keyboard shortcuts"
+        >
+          <svg width={24} height={24} fill="none" viewBox="0 0 24 24">
+            <path
+              d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12 16v.01"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12 8a4 4 0 00-4 4"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+
+        {/* Help Dialog */}
+        <HelpDialog isOpen={showHelp} onClose={() => setShowHelp(false)} />
+
         {/* Module Title */}
         {!loading && !error && moduleNames.length > 0 && (
           <div className="absolute top-0 left-0 right-0 text-center mb-4">
