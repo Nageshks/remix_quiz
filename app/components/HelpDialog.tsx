@@ -18,7 +18,7 @@ export function HelpDialog({ isOpen, onClose }: HelpDialogProps) {
             className="p-1 hover:bg-primary/10 rounded-full transition"
             aria-label="Close"
           >
-            <svg width={24} height={24} fill="none" viewBox="0 0 24 24">
+            <svg width={24} height={24} fill="none" viewBox="0 0 24 24" className="text-text-high">
               <path
                 d="M18 6L6 18M6 6l12 12"
                 stroke="currentColor"
@@ -32,31 +32,31 @@ export function HelpDialog({ isOpen, onClose }: HelpDialogProps) {
         
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono">1</kbd>
+            <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono text-text-high">1</kbd>
             <span className="text-text-high">Select option A</span>
           </div>
           <div className="flex items-center gap-3">
-            <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono">2</kbd>
+            <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono text-text-high">2</kbd>
             <span className="text-text-high">Select option B</span>
           </div>
           <div className="flex items-center gap-3">
-            <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono">3</kbd>
+            <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono text-text-high">3</kbd>
             <span className="text-text-high">Select option C</span>
           </div>
           <div className="flex items-center gap-3">
-            <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono">4</kbd>
+            <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono text-text-high">4</kbd>
             <span className="text-text-high">Select option D</span>
           </div>
           <div className="flex items-center gap-3">
-            <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono">←</kbd>
+            <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono text-text-high">←</kbd>
             <span className="text-text-high">Previous question</span>
           </div>
           <div className="flex items-center gap-3">
-            <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono">→</kbd>
+            <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono text-text-high">→</kbd>
             <span className="text-text-high">Next question</span>
           </div>
           <div className="flex items-center gap-3">
-            <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono">Enter</kbd>
+            <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono text-text-high">Enter</kbd>
             <span className="text-text-high">Submit quiz (when all questions are answered)</span>
           </div>
         </div>
