@@ -51,6 +51,40 @@ export default function QuizPage() {
   const [autoNext, setAutoNext] = React.useState(true);
   const [moduleNames, setModuleNames] = React.useState<string[]>([]);
 
+  const allAnswered = quizItems.length > 0 && 
+    quizItems.every(item => Boolean(item.selectedOptionId));
+
+  // Handle keyboard shortcuts for navigation and submission
+  React.useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (loading || showResult) return;
+
+      switch (e.key) {
+        case "ArrowLeft":
+          if (current > 0) {
+            e.preventDefault();
+            handlePrev();
+          }
+          break;
+        case "ArrowRight":
+          if (current < quizItems.length - 1) {
+            e.preventDefault();
+            handleNext();
+          }
+          break;
+        case "Enter":
+          if (allAnswered && !showResult) {
+            e.preventDefault();
+            handleSubmit();
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [current, quizItems.length, loading, showResult, allAnswered]);
+
   // Fetch module names
   React.useEffect(() => {
     if (!moduleIds) return;
@@ -195,9 +229,6 @@ export default function QuizPage() {
     // Navigate to quiz-setup with all parameters
     navigate(`/quiz-setup?${params.toString()}`);
   };
-
-  const allAnswered = quizItems.length > 0 && 
-    quizItems.every(item => Boolean(item.selectedOptionId));
 
   return (
     <main className="min-h-screen flex flex-col bg-background transition-colors">
